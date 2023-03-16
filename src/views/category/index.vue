@@ -6,6 +6,9 @@
       show-checkbox
       node-key="catId"
       :default-expanded-keys="expandedkeys"
+      draggable
+      :allow-drop="allowDrop"
+      @node-drop="handleDrop"
     >
 <span class="custom-tree-node" slot-scope="{ node, data }">
         <span>{{ node.label }}</span>
@@ -15,9 +18,15 @@
             size="mini"
             @click="() => append(data)"
             v-show="data.catLevel<=2"
-
           >
             增加
+          </el-button>
+          <el-button
+            type="text"
+            size="mini"
+            @click="() => edit(data)"
+          >
+            修改
           </el-button>
           <el-button
             type="text"
@@ -31,17 +40,22 @@
       </span>
     </el-tree>
 
-    <!--  dialog  -->
-    <el-dialog title="增加节点" :visible.sync="dialogFormVisible">
+    <!--  增加节点的对话框表单  -->
+    <el-dialog :title="form.catId?'修改节点':'新增节点'" :visible.sync="dialogFormVisible">
       <el-form :model="form">
         <el-form-item label="节点名称">
           <el-input v-model="form.name" autocomplete="off"></el-input>
         </el-form-item>
-
+        <el-form-item label="图标">
+          <el-input v-model="form.icon" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="计量单位">
+          <el-input v-model="form.productUnit" autocomplete="off"></el-input>
+        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">取 消</el-button>
-        <el-button type="primary" @click="addCategory">确 定</el-button>
+        <el-button @click="cancel">取 消</el-button>
+        <el-button type="primary" @click="confirmBtn">确 定</el-button>
       </div>
     </el-dialog>
   </div>
@@ -49,12 +63,17 @@
 
 
 <script>
-import request from '@/utils/request'
+
+import { load } from 'runjs/lib/script'
 
 export default {
   name: 'Category',
   data() {
     return {
+      // 拖拽后最新节点的数据
+      updateNodes: [],
+      // 最大层级
+      maxLevel: 0,
       // 节点数据
       categoryList: [],
       // 默认展开节点
@@ -66,6 +85,7 @@ export default {
       },
       dialogFormVisible: false,
       form: {
+        catId: '',
         name: '',
         // 层级
         catLevel: 0,
@@ -74,7 +94,9 @@ export default {
         // 默认显示
         showStatus: 1,
         // 排序
-        sort: 0
+        sort: 0,
+        icon: '',
+        productUnit: ''
       }
     }
   },
@@ -88,9 +110,10 @@ export default {
      * @returns {Promise<void>}
      */
     getData() {
+      let that = this
       this.$API.product.reqGetCategoryList().then(
         Response => {
-          this.categoryList = Response.categoryList
+          that.categoryList = Response.categoryList
         }
       )
     },
@@ -104,20 +127,62 @@ export default {
       this.form.parentCid = data.catId
       this.form.catLevel = data.catLevel * 1 + 1
       console.log(this.form)
+      this.expandedkeys = [data.parentCid]
     },
 
     /**
-     * 节点增加的方法
+     * 节点增加or修改的方法
      */
-    addCategory() {
-      this.$API.product.reqAddCategory(this.form).then(
+    confirmBtn() {
+      if (this.form.name === '' || this.form.name === null) {
+        return this.$message.warning('请输入节点名称哦')
+      }
+      this.$API.product.reqAddOrEditCategory(this.form).then(
         Response => {
           this.$message.success(Response.msg)
+          // 在响应中获取最新列表才能更新试图，不知道为啥
+          this.getData()
         }
       )
       this.dialogFormVisible = false
-      this.getData()
+      // 放这不可以
+      //this.getData()
       this.expandedkeys = [this.form.parentCid]
+      this.form = {
+        catId: '',
+        name: '',
+        // 层级
+        catLevel: 0,
+        // 父id
+        parentCid: 0,
+        // 默认显示
+        showStatus: 1,
+        // 排序
+        sort: 0,
+        icon: '',
+        productUnit: ''
+      }
+    },
+
+    /**
+     * 取消按钮
+     */
+    cancel() {
+      this.dialogFormVisible = false
+      this.form = {
+        catId: '',
+        name: '',
+        // 层级
+        catLevel: 0,
+        // 父id
+        parentCid: 0,
+        // 默认显示
+        showStatus: 1,
+        // 排序
+        sort: 0,
+        icon: '',
+        productUnit: ''
+      }
     },
 
     /**
@@ -147,7 +212,117 @@ export default {
           message: '已取消删除'
         })
       })
+    },
+
+    /**
+     * 修改节点
+     * @param data
+     */
+    edit(data) {
+      this.dialogFormVisible = true
+      // 获取最新节点的数据
+      this.$API.product.reqCategoryById(data.catId).then(
+        Response => {
+          console.log(Response)
+          this.form = Response.data
+        }
+      )
+    },
+
+    /**
+     * 拖拽时判定目标节点能否被放置。
+     */
+    allowDrop(draggingNode, dropNode, type) {
+      //this.maxLevel = 0
+      //1 被拖动的当前节点以及所在的父节点总层数不能大于3
+      this.countNodeLevel(draggingNode.data)
+      // 当前正在拖动的节点+父节点所在的深度不大于3即可
+      let deep = Math.abs(this.maxLevel - draggingNode.data.catLevel) + 1
+      // this.maxLevel
+      if (type === 'inner') {
+        return (deep + dropNode.level) <= 3
+      } else {
+        return (deep + dropNode.parent.level) <= 3
+      }
+    },
+    /**
+     * 递归计算被拖拽节点的最大层级
+     * @param node
+     */
+    countNodeLevel(node) {
+      // 找到所有子节点，求出最大深度
+      if (node.children != null && node.children.length > 0) {
+        for (let i = 0; i < node.children.length; i++) {
+          if (node.children[i].catLevel > this.maxLevel) {
+            this.maxLevel = node.children[i].catLevel
+          }
+          this.countNodeLevel(node.children[i])
+        }
+      }
+    },
+
+    /**
+     * 节点被拖拽成功时的回调
+     * @param draggingNode 被拖拽的节点
+     * @param dropNode 参考的节点：被拖拽的节点跟他同级（before、after）还是进入他（inner）
+     * @param dropType before、after、inner
+     * @param ev event
+     */
+    handleDrop(draggingNode, dropNode, dropType, ev) {
+      // 1、当前节点的兄弟节点的数组
+      let subNode = null
+      let pCid = 0
+      // 获取draggingNode的最父节点的id
+      if (dropType === 'before' || dropType === 'after') {
+        // 同级，则父节点的id为dropNode的parentId
+        pCid = dropNode.parent.data.catId === undefined ? 0 : dropNode.parent.data.catId
+        subNode = dropNode.parent.childNodes
+      } else {
+        // inner
+        pCid = dropNode.data.catId
+        subNode = dropNode.childNodes
+      }
+      // 2、获取draggingNode的最新顺序
+      subNode.forEach((item, index) => {
+        if (item.data.catId === pCid) {
+          let catLevel = draggingNode.level
+          if (item.level !== draggingNode.level) {
+            // 当前节点的层级发生变化
+            catLevel = item.level
+            // 修改他子节点的层级
+            this.updateChildNodeLevel(item)
+          }
+          this.updateNodes.push({
+            catId: item.data.catId,
+            sort: i,
+            parentCid: pCid,
+            catLevel: catLevel
+          })
+          this.updateNodes.push({ catId: item.data.catId, sort: index, parentCid: pCid })
+        } else {
+          this.updateNodes.push({ catId: item.data.catId, sort: index })
+        }
+      })
+      // 3、获取draggingNode的最新层级
+      console.log('hode', draggingNode, dropNode, dropType)
+    },
+    /**
+     * 更新子节点的层级
+     * @param node
+     */
+    updateChildNodeLevel(node) {
+      if (node.childNodes.length > 0) {
+        for (let i = 0; i < node.childNodes.length; i++) {
+          var cNode = node.childNodes[i].data
+          this.updateNodes.push({
+            catId: cNode.catId,
+            catLevel: node.childNodes[i].level
+          })
+          this.updateChildNodeLevel(node.childNodes[i])
+        }
+      }
     }
+
   }
 }
 </script>

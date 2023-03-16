@@ -9,7 +9,7 @@ const service = axios.create({
   // withCredentials: true, // send cookies when cross-domain requests
   timeout: 5000
 })
-
+let Inc = (new Date()).getTime()
 // 请求拦截器
 service.interceptors.request.use(config => {
     //config.headers['Content-Type'] = 'application/json;charset=utf-8'
