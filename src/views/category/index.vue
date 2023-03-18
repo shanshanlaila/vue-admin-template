@@ -1,14 +1,23 @@
 <template>
   <div>
+    <el-switch
+      v-model="draggable"
+      active-text="开启拖拽"
+      inactive-text="关闭拖拽"
+    >
+    </el-switch>
+    <el-button v-show="draggable" @click="batchUpdateNodes" type="primary">批量保存</el-button>
+    <el-button type="danger" @click="batchDeleteNodes">批量删除</el-button>
     <el-tree
       :data="categoryList"
       :props="defaultProps"
       show-checkbox
       node-key="catId"
       :default-expanded-keys="expandedkeys"
-      draggable
+      :draggable="draggable"
       :allow-drop="allowDrop"
       @node-drop="handleDrop"
+      ref="three"
     >
 <span class="custom-tree-node" slot-scope="{ node, data }">
         <span>{{ node.label }}</span>
@@ -70,6 +79,11 @@ export default {
   name: 'Category',
   data() {
     return {
+      // 是否被拖拽了
+      isDrop: false,
+      pCid: [],
+      // 是否可以拖拽
+      draggable: false,
       // 拖拽后最新节点的数据
       updateNodes: [],
       // 最大层级
@@ -126,7 +140,6 @@ export default {
       this.dialogFormVisible = true
       this.form.parentCid = data.catId
       this.form.catLevel = data.catLevel * 1 + 1
-      console.log(this.form)
       this.expandedkeys = [data.parentCid]
     },
 
@@ -191,7 +204,6 @@ export default {
      * @param data 节点数据
      */
     remove(node, data) {
-      console.log(node)
       this.$confirm(`此操作将删除【${data.name}】节点, 是否继续?`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -223,7 +235,6 @@ export default {
       // 获取最新节点的数据
       this.$API.product.reqCategoryById(data.catId).then(
         Response => {
-          console.log(Response)
           this.form = Response.data
         }
       )
@@ -233,30 +244,31 @@ export default {
      * 拖拽时判定目标节点能否被放置。
      */
     allowDrop(draggingNode, dropNode, type) {
-      //this.maxLevel = 0
       //1 被拖动的当前节点以及所在的父节点总层数不能大于3
-      this.countNodeLevel(draggingNode.data)
+      //1 被拖动的当前节点总层数
+      this.countNodeLevel(draggingNode)
       // 当前正在拖动的节点+父节点所在的深度不大于3即可
-      let deep = Math.abs(this.maxLevel - draggingNode.data.catLevel) + 1
+      let deep = Math.abs(this.maxLevel - draggingNode.level) + 1
       // this.maxLevel
       if (type === 'inner') {
-        return (deep + dropNode.level) <= 3
+        return deep + dropNode.level <= 3
       } else {
-        return (deep + dropNode.parent.level) <= 3
+        return deep + dropNode.parent.level <= 3
       }
     },
+
     /**
      * 递归计算被拖拽节点的最大层级
      * @param node
      */
     countNodeLevel(node) {
       // 找到所有子节点，求出最大深度
-      if (node.children != null && node.children.length > 0) {
-        for (let i = 0; i < node.children.length; i++) {
-          if (node.children[i].catLevel > this.maxLevel) {
-            this.maxLevel = node.children[i].catLevel
+      if (node.childNodes != null && node.childNodes.length > 0) {
+        for (let i = 0; i < node.childNodes.length; i++) {
+          if (node.childNodes[i].level > this.maxLevel) {
+            this.maxLevel = node.childNodes[i].level
           }
-          this.countNodeLevel(node.children[i])
+          this.countNodeLevel(node.childNodes)
         }
       }
     },
@@ -282,29 +294,27 @@ export default {
         pCid = dropNode.data.catId
         subNode = dropNode.childNodes
       }
+      this.pCid.push(pCid)
       // 2、获取draggingNode的最新顺序
       subNode.forEach((item, index) => {
-        if (item.data.catId === pCid) {
+        // 如果子节点的catId等于被拖拽节点的catId（说明拖动了参考节点的下一层子节点）
+        if (item.data.catId === draggingNode.data.catId) {
           let catLevel = draggingNode.level
           if (item.level !== draggingNode.level) {
             // 当前节点的层级发生变化
             catLevel = item.level
-            // 修改他子节点的层级
+            // 修改当前节点的子节点的层级
             this.updateChildNodeLevel(item)
           }
-          this.updateNodes.push({
-            catId: item.data.catId,
-            sort: i,
-            parentCid: pCid,
-            catLevel: catLevel
-          })
-          this.updateNodes.push({ catId: item.data.catId, sort: index, parentCid: pCid })
+          this.updateNodes.push({ catId: item.data.catId, sort: index, parentCid: pCid, catLevel: catLevel })
         } else {
           this.updateNodes.push({ catId: item.data.catId, sort: index })
         }
       })
       // 3、获取draggingNode的最新层级
-      console.log('hode', draggingNode, dropNode, dropType)
+      // 拖拽成功，发送请求
+      this.isDrop = true
+
     },
     /**
      * 更新子节点的层级
@@ -313,14 +323,65 @@ export default {
     updateChildNodeLevel(node) {
       if (node.childNodes.length > 0) {
         for (let i = 0; i < node.childNodes.length; i++) {
-          var cNode = node.childNodes[i].data
-          this.updateNodes.push({
-            catId: cNode.catId,
-            catLevel: node.childNodes[i].level
-          })
+          const cNode = node.childNodes[i].data
+          this.updateNodes.push({ catId: cNode.catId, catLevel: node.childNodes[i].level })
           this.updateChildNodeLevel(node.childNodes[i])
         }
       }
+    },
+
+    /**
+     * 批量更新节点
+     * @returns {ElMessageComponent}
+     */
+    batchUpdateNodes() {
+      if (!this.isDrop) {
+        return this.$message.info('还没有被拖拽呢')
+      }
+      this.$API.product.reqDropUpdateCategory(this.updateNodes).then(
+        Response => {
+          this.$message.success(Response.msg)
+          this.getData()
+          this.expandedkeys = this.pCid
+          this.maxLevel = 0
+          this.updateNodes = []
+          //this.pCid = 0
+          this.isDrop = false
+        }
+      )
+    },
+
+    /**
+     * 批量删除节点
+     */
+    batchDeleteNodes() {
+      let deleteNodesIds = []
+      let deleteNodesName = []
+      let checkedNodes = this.$refs.three.getCheckedNodes()
+      console.log(checkedNodes)
+      let extendKeys = checkedNodes[0].parentCid
+      checkedNodes.forEach(item => {
+        deleteNodesIds.push(item.catId)
+        deleteNodesName.push(item.name)
+      })
+      this.$confirm(`此操作将删除【${deleteNodesName}】节点, 是否继续?`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.$API.product.reqRemoveCategoryNode(deleteNodesIds).then(
+          Response => {
+            this.$message.success('批量删除成功')
+            this.getData()
+            this.expandedkeys = [extendKeys]
+          }
+        )
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
+      })
     }
 
   }

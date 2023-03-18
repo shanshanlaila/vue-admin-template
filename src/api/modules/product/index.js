@@ -18,3 +18,6 @@ export const reqAddOrEditCategory = (data) => {
 
 // 获取单个节点的数据
 export const reqCategoryById = (catId) => request.get(`/product/category/info/${catId}`)
+
+// 更新拖拽成功后的节点数组
+export const reqDropUpdateCategory = (updateNodes) => request.post('/product/category/update', updateNodes)
