@@ -1,9 +1,9 @@
-/**
- * Created by PanJiaChen on 16/11/18.
- */
+import Vue from 'vue'
+import router from '@/router'
+import store from '@/store'
 
 /**
- * Parse the time to string
+ * 解析成时间字符串
  * @param {(Object|string|number)} time
  * @param {string} cFormat
  * @returns {string | null}
@@ -45,7 +45,9 @@ export function parseTime(time, cFormat) {
   const time_str = format.replace(/{([ymdhisa])+}/g, (result, key) => {
     const value = formatObj[key]
     // Note: getDay() returns 0 on Sunday
-    if (key === 'a') { return ['日', '一', '二', '三', '四', '五', '六'][value ] }
+    if (key === 'a') {
+      return ['日', '一', '二', '三', '四', '五', '六'][value]
+    }
     return value.toString().padStart(2, '0')
   })
   return time_str
@@ -115,3 +117,62 @@ export function param2Obj(url) {
   })
   return obj
 }
+
+/**
+ * 是否具有权限
+ * @param key
+ * @returns {boolean}
+ */
+export function isAuth(key) {
+  //return JSON.parse(sessionStorage.getItem('permissions') || '[]').indexOf(key) !== -1 || false
+  return true
+}
+
+/**
+ * 清除登录信息
+ */
+export function clearLoginInfo () {
+  Vue.cookie.delete('token')
+  store.commit('resetStore')
+  router.options.isAddDynamicMenuRoutes = false
+}
+
+/**
+ * 树形数据转换
+ * @param {*} data
+ * @param {*} id
+ * @param {*} pid
+ */
+export function treeDataTranslate (data, id = 'id', pid = 'parentId') {
+  var res = []
+  var temp = {}
+  for (var i = 0; i < data.length; i++) {
+    temp[data[i][id]] = data[i]
+  }
+  for (var k = 0; k < data.length; k++) {
+    if (temp[data[k][pid]] && data[k][id] !== data[k][pid]) {
+      if (!temp[data[k][pid]]['children']) {
+        temp[data[k][pid]]['children'] = []
+      }
+      if (!temp[data[k][pid]]['_level']) {
+        temp[data[k][pid]]['_level'] = 1
+      }
+      data[k]['_level'] = temp[data[k][pid]]._level + 1
+      temp[data[k][pid]]['children'].push(data[k])
+    } else {
+      res.push(data[k])
+    }
+  }
+  return res
+}
+
+/**
+ * 获取uuid
+ */
+export function getUUID () {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    return (c === 'x' ? (Math.random() * 16 | 0) : ('r&0x3' | '0x8')).toString(16)
+  })
+}
+
+

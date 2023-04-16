@@ -73,8 +73,6 @@
 
 <script>
 
-import { load } from 'runjs/lib/script'
-
 export default {
   name: 'Category',
   data() {
@@ -125,7 +123,7 @@ export default {
      */
     getData() {
       let that = this
-      this.$API.product.reqGetCategoryList().then(
+      this.$API.category.reqGetCategoryList().then(
         Response => {
           that.categoryList = Response.categoryList
         }
@@ -150,7 +148,7 @@ export default {
       if (this.form.name === '' || this.form.name === null) {
         return this.$message.warning('请输入节点名称哦')
       }
-      this.$API.product.reqAddOrEditCategory(this.form).then(
+      this.$API.category.reqAddOrEditCategory(this.form).then(
         Response => {
           this.$message.success(Response.msg)
           // 在响应中获取最新列表才能更新试图，不知道为啥
@@ -210,7 +208,7 @@ export default {
         type: 'warning'
       }).then(() => {
         const ids = [data.catId]
-        this.$API.product.reqRemoveCategoryNode(ids).then(
+        this.$API.category.reqRemoveCategoryNode(ids).then(
           Response => {
             this.$message.success(Response.msg)
             this.getData()
@@ -233,7 +231,7 @@ export default {
     edit(data) {
       this.dialogFormVisible = true
       // 获取最新节点的数据
-      this.$API.product.reqCategoryById(data.catId).then(
+      this.$API.category.reqCategoryById(data.catId).then(
         Response => {
           this.form = Response.data
         }
@@ -338,7 +336,7 @@ export default {
       if (!this.isDrop) {
         return this.$message.info('还没有被拖拽呢')
       }
-      this.$API.product.reqDropUpdateCategory(this.updateNodes).then(
+      this.$API.category.reqDropUpdateCategory(this.updateNodes).then(
         Response => {
           this.$message.success(Response.msg)
           this.getData()
@@ -358,7 +356,10 @@ export default {
       let deleteNodesIds = []
       let deleteNodesName = []
       let checkedNodes = this.$refs.three.getCheckedNodes()
-      console.log(checkedNodes)
+      if (checkedNodes.length === 0) {
+        this.$message.info('还没有选择节点啦')
+        return
+      }
       let extendKeys = checkedNodes[0].parentCid
       checkedNodes.forEach(item => {
         deleteNodesIds.push(item.catId)
@@ -369,7 +370,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.$API.product.reqRemoveCategoryNode(deleteNodesIds).then(
+        this.$API.category.reqRemoveCategoryNode(deleteNodesIds).then(
           Response => {
             this.$message.success('批量删除成功')
             this.getData()
@@ -387,8 +388,3 @@ export default {
   }
 }
 </script>
-
-
-<style scoped>
-
-</style>
