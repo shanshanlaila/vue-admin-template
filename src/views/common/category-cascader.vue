@@ -57,12 +57,12 @@ export default {
   //方法集合
   methods: {
     getCategorys() {
-      this.$http({
-        url: this.$http.adornUrl('/product/category/list/tree'),
-        method: 'get'
-      }).then(({ data }) => {
-        this.categorys = data.data
-      })
+      let that = this
+      this.$API.category.reqGetCategoryList().then(
+        Response => {
+          that.categorys = Response.categoryList
+        }
+      )
     }
   },
   //生命周期 - 创建完成（可以访问当前this实例）

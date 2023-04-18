@@ -1,6 +1,6 @@
 <template>
   <el-dialog
-    :title="!dataForm.id ? '新增' : '修改'"
+    :title="!dataForm.attrGroupId ? '新增' : '修改'"
     :close-on-click-modal="false"
     :visible.sync="visible"
     @closed="dialogClose"
@@ -40,122 +40,143 @@
 
 <script>
 import CategoryCascader from '@/views/common/category-cascader.vue'
+import { reqAttrGroupById } from '@/api/modules/product/attrGroup'
 
 export default {
-  components:{CategoryCascader},
+  components: { CategoryCascader },
   data() {
     return {
-      props:{
-        value:"catId",
-        label:"name",
-        children:"children"
+      props: {
+        value: 'catId',
+        label: 'name',
+        children: 'children'
       },
       visible: false,
       categorys: [],
       catelogPath: [],
       dataForm: {
         attrGroupId: 0,
-        attrGroupName: "",
-        sort: "",
-        descript: "",
-        icon: "",
+        attrGroupName: '',
+        sort: '',
+        descript: '',
+        icon: '',
         catelogId: 0
       },
       dataRule: {
         attrGroupName: [
-          { required: true, message: "组名不能为空", trigger: "blur" }
+          { required: true, message: '组名不能为空', trigger: 'blur' }
         ],
-        sort: [{ required: true, message: "排序不能为空", trigger: "blur" }],
+        sort: [{ required: true, message: '排序不能为空', trigger: 'blur' }],
         descript: [
-          { required: true, message: "描述不能为空", trigger: "blur" }
+          { required: true, message: '描述不能为空', trigger: 'blur' }
         ],
-        icon: [{ required: true, message: "组图标不能为空", trigger: "blur" }],
+        icon: [{ required: true, message: '组图标不能为空', trigger: 'blur' }],
         catelogId: [
-          { required: true, message: "所属分类id不能为空", trigger: "blur" }
+          { required: true, message: '所属分类不能为空', trigger: 'blur' }
         ]
       }
-    };
+    }
   },
 
-
   methods: {
-    dialogClose(){
-      this.catelogPath = [];
+    /**
+     * 关闭对话框清空表单分类联级选择框数据
+     */
+    dialogClose() {
+      this.catelogPath = []
     },
-    getCategorys(){
-      this.$http({
-        url: this.$http.adornUrl("/product/category/list/tree"),
-        method: "get"
-      }).then(({ data }) => {
-        this.categorys = data.data;
-      });
+    /**
+     * 获取分类数据
+     */
+    getCategorys() {
+      this.$API.category.reqGetCategoryList().then(
+        Response => {
+          this.categorys = Response.categoryList
+        }
+      )
     },
     init(id) {
-      this.dataForm.attrGroupId = id || 0;
-      this.visible = true;
+      this.dataForm.attrGroupId = id || 0
+      this.visible = true
       this.$nextTick(() => {
-        this.$refs["dataForm"].resetFields();
+        this.$refs['dataForm'].resetFields()
         if (this.dataForm.attrGroupId) {
-          this.$http({
-            url: this.$http.adornUrl(
-              `/product/attrgroup/info/${this.dataForm.attrGroupId}`
-            ),
-            method: "get",
-            params: this.$http.adornParams()
-          }).then(({ data }) => {
-            if (data && data.code === 0) {
-              this.dataForm.attrGroupName = data.attrGroup.attrGroupName;
-              this.dataForm.sort = data.attrGroup.sort;
-              this.dataForm.descript = data.attrGroup.descript;
-              this.dataForm.icon = data.attrGroup.icon;
-              this.dataForm.catelogId = data.attrGroup.catelogId;
+          this.$API.attrGroup.reqAttrGroupById(this.dataForm.attrGroupId).then(
+            Response => {
+              this.$message.success(Response.msg)
+              this.dataForm.attrGroupName = Response.data.attrGroupName
+              this.dataForm.sort = Response.data.sort
+              this.dataForm.descript = Response.data.descript
+              this.dataForm.icon = Response.data.icon
+              this.dataForm.catelogId = Response.data.catelogId
               //查出catelogId的完整路径
-              this.catelogPath =  data.attrGroup.catelogPath;
+              this.catelogPath = Response.data.catelogPath
             }
-          });
+          )
         }
-      });
+      })
     },
     // 表单提交
     dataFormSubmit() {
-      this.$refs["dataForm"].validate(valid => {
+      this.$refs['dataForm'].validate(valid => {
         if (valid) {
-          this.$http({
+          this.$API.attrGroup.reqAddOrEditAttrGroup({
+            attrGroupId: this.dataForm.attrGroupId || undefined,
+            attrGroupName: this.dataForm.attrGroupName,
+            sort: this.dataForm.sort,
+            descript: this.dataForm.descript,
+            icon: this.dataForm.icon,
+            catelogId: this.catelogPath[this.catelogPath.length - 1]
+          }).then(
+            Response => {
+              this.$message({
+                message: Response.msg,
+                type: 'success',
+                duration: 1500,
+                onClose: () => {
+                  this.visible = false
+                  this.$emit('refreshDataList')
+                }
+              })
+            }
+          )
+          /* this.$http({
             url: this.$http.adornUrl(
               `/product/attrgroup/${
-                !this.dataForm.attrGroupId ? "save" : "update"
+                !this.dataForm.attrGroupId ? 'save' : 'update'
               }`
             ),
-            method: "post",
+            method: 'post',
             data: this.$http.adornData({
               attrGroupId: this.dataForm.attrGroupId || undefined,
               attrGroupName: this.dataForm.attrGroupName,
               sort: this.dataForm.sort,
               descript: this.dataForm.descript,
               icon: this.dataForm.icon,
-              catelogId: this.catelogPath[this.catelogPath.length-1]
+              catelogId: this.catelogPath[this.catelogPath.length - 1]
             })
           }).then(({ data }) => {
             if (data && data.code === 0) {
               this.$message({
-                message: "操作成功",
-                type: "success",
+                message: '操作成功',
+                type: 'success',
                 duration: 1500,
                 onClose: () => {
-                  this.visible = false;
-                  this.$emit("refreshDataList");
+                  this.visible = false
+                  this.$emit('refreshDataList')
                 }
-              });
+              })
             } else {
-              this.$message.error(data.msg);
+              this.$message.error(data.msg)
             }
-          });
+          }) */
         }
-      });
+      })
     }
   },
-  created(){
-    this.getCategorys();
+  mounted() {
+    console.log(123)
+    this.getCategorys()
   }
-};
+}
 </script>

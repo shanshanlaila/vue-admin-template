@@ -1,7 +1,7 @@
 <template>
   <el-row :gutter="20">
     <el-col :span="6">
-      <category @tree-node-click="treenodeclick"></category>
+      <category @tree-node-click="treeNodeClick"></category>
     </el-col>
     <el-col :span="18">
       <div class="mod-config">
@@ -109,7 +109,6 @@ export default {
     };
   },
   mounted() {
-    console.log("123")
     this.getDataList();
   },
   methods: {
@@ -122,20 +121,27 @@ export default {
       });
     },
     //感知树节点被点击
-    treenodeclick(data, node, component) {
+    treeNodeClick(data, node, component) {
+      console.log(data)
+      console.log(node)
       if (node.level === 3) {
         this.catId = data.catId;
         this.getDataList(); //重新查询
       }
     },
+    /**
+     * 查询所有
+     */
     getAllDataList(){
       this.catId = 0;
       this.getDataList();
     },
-    // 获取数据列表
+    /**
+     * 获取数据列表
+     */
     getDataList() {
       this.dataListLoading = true;
-      this.$API.attrGroup.reqGetAttrGroupList(this.pageIndex, this.pageSize, this.dataForm.key).then(
+      this.$API.attrGroup.reqGetAttrGroupList(this.pageIndex, this.pageSize, this.dataForm.key,this.catId).then(
         Response => {
           if (Response.code === 200) {
             this.dataList = Response.data.records
@@ -186,24 +192,18 @@ export default {
           type: "warning"
         }
       ).then(() => {
-        this.$http({
-          url: this.$http.adornUrl("/product/attrgroup/delete"),
-          method: "post",
-          data: this.$http.adornData(ids, false)
-        }).then(({ data }) => {
-          if (data && data.code === 0) {
+        this.$API.attrGroup.reqRemoveAttrGroup(ids).then(
+          Response=>{
             this.$message({
-              message: "操作成功",
+              message: Response.msg,
               type: "success",
               duration: 1500,
               onClose: () => {
                 this.getDataList();
               }
             });
-          } else {
-            this.$message.error(data.msg);
           }
-        });
+        )
       });
     }
   }

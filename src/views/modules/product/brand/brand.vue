@@ -170,21 +170,24 @@ export default {
         this.getCateRelation()
       })
     },
+    /**
+     * 关联分类
+     * @param brandId
+     */
     updateCatelogHandle(brandId) {
       this.cateRelationDialogVisible = true
       this.brandId = brandId
       this.getCateRelation()
     },
+    /**
+     * 获取品牌关联的分类数据
+     */
     getCateRelation() {
-      this.$http({
-        url: this.$http.adornUrl('/product/categorybrandrelation/catelog/list'),
-        method: 'get',
-        params: this.$http.adornParams({
-          brandId: this.brandId
-        })
-      }).then(({ data }) => {
-        this.cateRelationTableData = data.data
-      })
+      this.$API.categoryBrandRelation.reqGetCateRelation(this.brandId).then(
+        Response=>{
+          this.cateRelationTableData = Response.data
+        }
+      )
     },
     /**
      * 获取数据列表
