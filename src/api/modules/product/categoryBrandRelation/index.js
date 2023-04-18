@@ -12,3 +12,10 @@ export function reqGetCateRelation(brandId) {
     }
   })
 }
+
+export const reqAddCategoryBrandRelation = (brandId, catelogId) => request.post('product/categoryBrandRelation/save', {
+  brandId,
+  catelogId
+})
+
+export const reqRemoveCategoryBrandRelation = (id) => request.delete(`product/categoryBrandRelation/remove/${id}`)

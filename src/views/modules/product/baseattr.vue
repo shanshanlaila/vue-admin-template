@@ -1,7 +1,7 @@
 <template>
   <el-row :gutter="20">
     <el-col :span="6">
-      <category @tree-node-click="treenodeclick"></category>
+      <category @tree-node-click="treeNodeClick"></category>
     </el-col>
     <el-col :span="18">
       <div class="mod-config">
@@ -16,13 +16,15 @@
               v-if="isAuth('product:attr:save')"
               type="primary"
               @click="addOrUpdateHandle()"
-            >新增</el-button>
+            >新增
+            </el-button>
             <el-button
               v-if="isAuth('product:attr:delete')"
               type="danger"
               @click="deleteHandle()"
               :disabled="dataListSelections.length <= 0"
-            >批量删除</el-button>
+            >批量删除
+            </el-button>
           </el-form-item>
         </el-form>
         <el-table
@@ -36,20 +38,20 @@
           <el-table-column prop="attrId" header-align="center" align="center" label="id"></el-table-column>
           <el-table-column prop="attrName" header-align="center" align="center" label="属性名"></el-table-column>
           <el-table-column
-            v-if="attrtype == 1"
+            v-if="attrtype === 1"
             prop="searchType"
             header-align="center"
             align="center"
             label="可检索"
           >
             <template slot-scope="scope">
-              <i class="el-icon-success" v-if="scope.row.searchType==1"></i>
+              <i class="el-icon-success" v-if="scope.row.searchType===1"></i>
               <i class="el-icon-error" v-else></i>
             </template>
           </el-table-column>
           <el-table-column prop="valueType" header-align="center" align="center" label="值类型">
             <template slot-scope="scope">
-              <el-tag type="success" v-if="scope.row.valueType==0">单选</el-tag>
+              <el-tag type="success" v-if="scope.row.valueType===0">单选</el-tag>
               <el-tag v-else>多选</el-tag>
             </template>
           </el-table-column>
@@ -58,29 +60,29 @@
             <template slot-scope="scope">
               <el-tooltip placement="top">
                 <div slot="content">
-                  <span v-for="(i,index) in scope.row.valueSelect.split(';')" :key="index">{{i}}<br/></span>
+                  <span v-for="(i,index) in scope.row.valueSelect.split(';')" :key="index">{{ i }}<br/></span>
                 </div>
-                <el-tag>{{scope.row.valueSelect.split(";")[0]+" ..."}}</el-tag>
+                <el-tag>{{ scope.row.valueSelect.split(';')[0] + ' ...' }}</el-tag>
               </el-tooltip>
             </template>
           </el-table-column>
           <el-table-column prop="enable" header-align="center" align="center" label="启用">
             <template slot-scope="scope">
-              <i class="el-icon-success" v-if="scope.row.enable==1"></i>
+              <i class="el-icon-success" v-if="scope.row.enable===1"></i>
               <i class="el-icon-error" v-else></i>
             </template>
           </el-table-column>
           <el-table-column prop="catelogName" header-align="center" align="center" label="所属分类"></el-table-column>
           <el-table-column
-            v-if="attrtype == 1"
+            v-if="attrtype === 1"
             prop="groupName"
             header-align="center"
             align="center"
             label="所属分组"
           ></el-table-column>
-          <el-table-column v-if="attrtype == 1" prop="showDesc" header-align="center" align="center" label="快速展示">
+          <el-table-column v-if="attrtype === 1" prop="showDesc" header-align="center" align="center" label="快速展示">
             <template slot-scope="scope">
-              <i class="el-icon-success" v-if="scope.row.showDesc==1"></i>
+              <i class="el-icon-success" v-if="scope.row.showDesc===1"></i>
               <i class="el-icon-error" v-else></i>
             </template>
           </el-table-column>
@@ -119,10 +121,10 @@
 </template>
 
 <script>
-//这里可以导入其他文件（比如：组件，工具js，第三方插件js，json文件，图片文件等等）
-//例如：import 《组件名称》 from '《组件路径》';
-import AddOrUpdate from "./attr-add-or-update";
+import AddOrUpdate from './attr-add-or-update'
 import Category from '@/views/common/category.vue'
+import { isAuth } from '@/utils'
+
 export default {
   //import引入的组件需要注入到对象中才能使用
   components: { Category, AddOrUpdate },
@@ -137,7 +139,7 @@ export default {
       catId: 0,
       type: 1,
       dataForm: {
-        key: ""
+        key: ''
       },
       dataList: [],
       pageIndex: 1,
@@ -146,104 +148,103 @@ export default {
       dataListLoading: false,
       dataListSelections: [],
       addOrUpdateVisible: false
-    };
+    }
   },
-  activated() {
-    this.getDataList();
+  mounted() {
+    this.getDataList()
   },
   methods: {
+    isAuth,
     //感知树节点被点击
-    treenodeclick(data, node, component) {
-      if (node.level == 3) {
-        this.catId = data.catId;
-        this.getDataList(); //重新查询
+    treeNodeClick(data, node, component) {
+      if (node.level === 3) {
+        this.catId = data.catId
+        this.getDataList() //重新查询
       }
     },
-    getAllDataList(){
-      this.catId = 0;
-      this.getDataList();
+    getAllDataList() {
+      this.catId = 0
+      this.getDataList()
     },
-    // 获取数据列表
+
+    /**
+     * 获取数据列表
+     */
     getDataList() {
-      this.dataListLoading = true;
-      let type = this.attrtype == 0 ? "sale" : "base";
-      this.$http({
-        url: this.$http.adornUrl(`/product/attr/${type}/list/${this.catId}`),
-        method: "get",
-        params: this.$http.adornParams({
-          page: this.pageIndex,
-          limit: this.pageSize,
-          key: this.dataForm.key
-        })
-      }).then(({ data }) => {
-        if (data && data.code === 0) {
-          this.dataList = data.page.list;
-          this.totalPage = data.page.totalCount;
-        } else {
-          this.dataList = [];
-          this.totalPage = 0;
+      this.dataListLoading = true
+      // '属性类型[0-销售属性，1-基本属性，2-既是销售属性又是基本属性]'
+      let type = this.attrtype === 0 ? 'sale' : 'base'
+      this.$API.attr.reqGetAttrList(this.pageIndex, this.pageSize, this.dataForm.key, type).then(
+        Response => {
+          if (Response.code === 200) {
+            this.dataList = Response.data.records
+            this.totalPage = Response.data.total
+          } else {
+            this.dataList = []
+            this.totalPage = 0
+          }
+          this.dataListLoading = false
         }
-        this.dataListLoading = false;
-      });
+      )
     },
     // 每页数
     sizeChangeHandle(val) {
-      this.pageSize = val;
-      this.pageIndex = 1;
-      this.getDataList();
+      this.pageSize = val
+      this.pageIndex = 1
+      this.getDataList()
     },
     // 当前页
     currentChangeHandle(val) {
-      this.pageIndex = val;
-      this.getDataList();
+      this.pageIndex = val
+      this.getDataList()
     },
     // 多选
     selectionChangeHandle(val) {
-      this.dataListSelections = val;
+      this.dataListSelections = val
     },
     // 新增 / 修改
     addOrUpdateHandle(id) {
-      this.addOrUpdateVisible = true;
+      this.addOrUpdateVisible = true
       this.$nextTick(() => {
-        this.$refs.addOrUpdate.init(id);
-      });
+        this.$refs.addOrUpdate.init(id)
+      })
     },
     // 删除
     deleteHandle(id) {
       var ids = id
         ? [id]
         : this.dataListSelections.map(item => {
-            return item.attrId;
-          });
+          return item.attrId
+        })
       this.$confirm(
-        `确定对[id=${ids.join(",")}]进行[${id ? "删除" : "批量删除"}]操作?`,
-        "提示",
+        `确定对[id=${ids.join(',')}]进行[${id ? '删除' : '批量删除'}]操作?`,
+        '提示',
         {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
-          type: "warning"
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
         }
       ).then(() => {
         this.$http({
-          url: this.$http.adornUrl("/product/attr/delete"),
-          method: "post",
+          url: this.$http.adornUrl('/product/attr/delete'),
+          method: 'post',
           data: this.$http.adornData(ids, false)
         }).then(({ data }) => {
           if (data && data.code === 0) {
             this.$message({
-              message: "操作成功",
-              type: "success",
+              message: '操作成功',
+              type: 'success',
               duration: 1500,
               onClose: () => {
-                this.getDataList();
+                this.getDataList()
               }
-            });
+            })
           } else {
-            this.$message.error(data.msg);
+            this.$message.error(data.msg)
           }
-        });
-      });
+        })
+      })
     }
   }
-};
+}
 </script>

@@ -35,19 +35,13 @@ export default {
           meta: { title: '属性分组', icon: 'tree' }
         },
         {
-          path: '/spu',
-          name: 'Spu',
-          component: () => import('@/views/modules/product/spu.vue'),
+          path: '/attr',
+          name: 'Attr',
+          component: () => import('@/views/modules/product/baseattr.vue'),
           meta: { title: '规格参数', icon: 'tree' }
-        },
+        }
       ]
-    },
-    /* {
-      path: '/attrGroup',
-      name: 'AttrGroup',
-      component: () => import('@/views/modules/product/attrgroup.vue'),
-      meta: { title: '属性分组', icon: 'tree' }
-    }, */
+    }
   ]
 
 }

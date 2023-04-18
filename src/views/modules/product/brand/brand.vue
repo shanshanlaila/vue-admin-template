@@ -87,7 +87,7 @@
         <el-button slot="reference">新增关联</el-button>
       </el-popover>
       <el-table :data="cateRelationTableData" style="width: 100%">
-        <el-table-column prop="id" label="#"></el-table-column>
+        <el-table-column prop="id" label="ID"></el-table-column>
         <el-table-column prop="brandName" label="品牌名"></el-table-column>
         <el-table-column prop="catelogName" label="分类名"></el-table-column>
         <el-table-column fixed="right" header-align="center" align="center" label="操作">
@@ -147,28 +147,38 @@ export default {
   },
   methods: {
     isAuth,
+    /**
+     * 品牌新增关联确认按钮
+     */
     addCatelogSelect() {
       //{"brandId":1,"catelogId":2}
       this.popCatelogSelectVisible = false
-      this.$http({
-        url: this.$http.adornUrl('/product/categorybrandrelation/save'),
-        method: 'post',
-        data: this.$http.adornData({
-          brandId: this.brandId,
-          catelogId: this.catelogPath[this.catelogPath.length - 1]
-        }, false)
-      }).then(({ data }) => {
-        this.getCateRelation()
-      })
+      this.$API.categoryBrandRelation.reqAddCategoryBrandRelation(this.brandId, this.catelogPath[this.catelogPath.length - 1]).then(
+        Response => {
+          this.$message.success(Response.msg)
+          this.getCateRelation()
+        }
+      )
     },
+    /**
+     * 品牌关联分类移除按钮
+     * @param id
+     * @param brandId
+     */
     deleteCateRelationHandle(id, brandId) {
-      this.$http({
+      this.$API.categoryBrandRelation.reqRemoveCategoryBrandRelation(id).then(
+        Response => {
+          this.$message.success(Response.msg)
+          this.getCateRelation()
+        }
+      )
+      /* this.$http({
         url: this.$http.adornUrl('/product/categorybrandrelation/delete'),
         method: 'post',
         data: this.$http.adornData([id], false)
       }).then(({ data }) => {
         this.getCateRelation()
-      })
+      }) */
     },
     /**
      * 关联分类
@@ -184,7 +194,7 @@ export default {
      */
     getCateRelation() {
       this.$API.categoryBrandRelation.reqGetCateRelation(this.brandId).then(
-        Response=>{
+        Response => {
           this.cateRelationTableData = Response.data
         }
       )

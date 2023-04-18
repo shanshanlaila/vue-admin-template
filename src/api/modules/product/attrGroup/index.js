@@ -24,6 +24,3 @@ export const reqAddOrEditAttrGroup = (data) => {
 
 // 获取单个属性分组的数据
 export const reqAttrGroupById = (attrGroupId) => request.get(`/product/attrGroup/info/${attrGroupId}`)
-
-// 更新状态
-export const reqUpdateattrGroupShowStatus = (data) => request.put(`/product/attrGroup/update/status`, data)
