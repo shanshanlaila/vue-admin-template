@@ -24,3 +24,21 @@ export const reqAddOrEditAttrGroup = (data) => {
 
 // 获取单个属性分组的数据
 export const reqAttrGroupById = (attrGroupId) => request.get(`/product/attrGroup/info/${attrGroupId}`)
+
+// 查询属性分组关联的基础属性列表
+export const reqGetAttrGroupRelation = (attrGroupId) => request.get(`/product/attrGroup/${attrGroupId}/attr/relation`)
+
+// 移除属性分组关联的基础属性
+export const reqRemoveAttrGroupRelation = (data) => {
+  return request.post(`/product/attrGroup/attr/relation/delete`, data)
+}
+
+export const reqGetNoAttrRelation = (page, limit, key, attrGroupId) => {
+  return request.get(`/product/attrGroup/${attrGroupId}/noAttr/relation`, {
+    params: {
+      page,
+      limit,
+      key
+    }
+  })
+}

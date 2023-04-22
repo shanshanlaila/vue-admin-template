@@ -1,6 +1,6 @@
 <template>
   <el-dialog
-    :title="!dataForm.id ? '新增' : '修改'"
+    :title="!dataForm.attrId ? '新增' : '修改'"
     :close-on-click-modal="false"
     :visible.sync="visible"
     @closed="dialogClose"
@@ -83,7 +83,7 @@
       </el-form-item>
     </el-form>
     <span slot="footer" class="dialog-footer">
-      <el-button @click="visible = false">取消</el-button>
+      <el-button @click="visible=false">取消</el-button>
       <el-button type="primary" @click="dataFormSubmit()">确定</el-button>
     </span>
   </el-dialog>
@@ -172,31 +172,26 @@ export default {
     }
   },
   watch: {
-    catelogPath(path) {
-      //监听到路径变化需要查出这个三级分类的分组信息
-      console.log('路径变了', path)
-      this.attrGroups = []
-      this.dataForm.attrGroupId = ''
-      this.dataForm.catelogId = path[path.length - 1]
-      if (path && path.length === 3) {
-        this.$http({
-          url: this.$http.adornUrl(
-            `/product/attrgroup/list/${path[path.length - 1]}`
-          ),
-          method: 'get',
-          params: this.$http.adornParams({ page: 1, limit: 10000000 })
-        }).then(({ data }) => {
-          if (data && data.code === 0) {
-            this.attrGroups = data.page.list
-          } else {
-            this.$message.error(data.msg)
-          }
-        })
-      } else if (path.length === 0) {
-        this.dataForm.catelogId = ''
-      } else {
-        this.$message.error('请选择正确的分类')
-        this.dataForm.catelogId = ''
+    catelogPath: {
+      immediate: true,
+      deep: true,
+      handler(path, oldValue) {
+        //监听到路径变化需要查出这个三级分类的分组信息
+        this.attrGroups = []
+        this.dataForm.attrGroupId = ''// 这里的问题
+        this.dataForm.catelogId = path[path.length - 1]
+        if (path && path.length === 3) {
+          this.$API.attrGroup.reqGetAttrGroupList(1, 10000000, null, path[path.length - 1]).then(
+            Response => {
+              this.attrGroups = Response.data.records
+            }
+          )
+        } else if (path.length === 0) {
+          this.dataForm.catelogId = ''
+        } else {
+          this.$message.error('请选择正确的分类')
+          this.dataForm.catelogId = ''
+        }
       }
     }
   },
@@ -208,31 +203,24 @@ export default {
       this.$nextTick(() => {
         this.$refs['dataForm'].resetFields()
         if (this.dataForm.attrId) {
-          this.$http({
-            url: this.$http.adornUrl(
-              `/product/attr/info/${this.dataForm.attrId}`
-            ),
-            method: 'get',
-            params: this.$http.adornParams()
-          }).then(({ data }) => {
-            if (data && data.code === 0) {
-              this.dataForm.attrName = data.attr.attrName
-              this.dataForm.searchType = data.attr.searchType
-              this.dataForm.valueType = data.attr.valueType
-              this.dataForm.icon = data.attr.icon
-              this.dataForm.valueSelect = data.attr.valueSelect.split(';')
-              this.dataForm.attrType = data.attr.attrType
-              this.dataForm.enable = data.attr.enable
-              this.dataForm.catelogId = data.attr.catelogId
-              this.dataForm.showDesc = data.attr.showDesc
-              //attrGroupId
-              //catelogPath
-              this.catelogPath = data.attr.catelogPath
+          // 修改回显
+          this.$API.attr.reqAttrById(this.dataForm.attrId).then(
+            Response => {
+              this.dataForm.attrName = Response.data.attrName
+              this.dataForm.searchType = Response.data.searchType
+              this.dataForm.valueType = Response.data.valueType
+              this.dataForm.icon = Response.data.icon
+              this.dataForm.valueSelect = Response.data.valueSelect.split(';')
+              this.dataForm.attrType = Response.data.attrType
+              this.dataForm.enable = Response.data.enable
+              this.dataForm.catelogId = Response.data.catelogId
+              this.dataForm.showDesc = Response.data.showDesc
+              this.catelogPath = Response.data.catelogPath
               this.$nextTick(() => {
-                this.dataForm.attrGroupId = data.attr.attrGroupId
+                this.dataForm.attrGroupId = Response.data.attrGroupId
               })
             }
-          })
+          )
         }
       })
     },
@@ -241,6 +229,7 @@ export default {
       this.$refs['dataForm'].validate(valid => {
         if (valid) {
           request.post(`/product/attr/${!this.dataForm.attrId ? 'save' : 'update'}`, {
+            /* attrVo */
             attrId: this.dataForm.attrId || undefined,
             attrName: this.dataForm.attrName,
             searchType: this.dataForm.searchType,
@@ -265,44 +254,22 @@ export default {
               })
             }
           )
-          /* this.$http({
-            url: this.$http.adornUrl(
-              `/product/attr/${!this.dataForm.attrId ? 'save' : 'update'}`
-            ),
-            method: 'post',
-            data: this.$http.adornData({
-              attrId: this.dataForm.attrId || undefined,
-              attrName: this.dataForm.attrName,
-              searchType: this.dataForm.searchType,
-              valueType: this.dataForm.valueType,
-              icon: this.dataForm.icon,
-              valueSelect: this.dataForm.valueSelect.join(';'),
-              attrType: this.dataForm.attrType,
-              enable: this.dataForm.enable,
-              catelogId: this.dataForm.catelogId,
-              attrGroupId: this.dataForm.attrGroupId,
-              showDesc: this.dataForm.showDesc
-            })
-          }).then(({ data }) => {
-            if (data && data.code === 0) {
-              this.$message({
-                message: '操作成功',
-                type: 'success',
-                duration: 1500,
-                onClose: () => {
-                  this.visible = false
-                  this.$emit('refreshDataList')
-                }
-              })
-            } else {
-              this.$message.error(data.msg)
-            }
-          }) */
         }
       })
     },
+
     //dialogClose
     dialogClose() {
+      this.dataForm.attrName = ''
+      this.dataForm.searchType = 0
+      this.dataForm.valueType = 1
+      this.dataForm.icon = ''
+      this.dataForm.valueSelect = ''
+      this.dataForm.attrType = 1
+      this.dataForm.enable = 1
+      this.dataForm.catelogId = ''
+      this.attrGroupId = ''
+      this.dataForm.showDesc = 0
       this.catelogPath = []
     }
   }

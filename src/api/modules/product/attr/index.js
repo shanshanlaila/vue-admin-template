@@ -1,24 +1,15 @@
 import request from '@/utils/request'
 
 // 获取属性分组列表
-export const reqGetAttrList = (page, limit, key, type) => {
-  if (type === 'sale') {
-    return request.get(`/product/attr/sale/list`, {
-      params: {
-        page,
-        limit,
-        key
-      }
-    })
-  } else {
-    return request.get(`/product/attr/base/list`, {
-      params: {
-        page,
-        limit,
-        key
-      }
-    })
-  }
+export const reqGetAttrList = (catId, page, limit, key, attrType) => {
+  return request.get(`/product/attr/list/${catId}`, {
+    params: {
+      page,
+      limit,
+      key,
+      attrType
+    }
+  })
 }
 
 // 删除属性

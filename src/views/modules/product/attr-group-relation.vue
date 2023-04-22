@@ -22,7 +22,8 @@
             <el-table-column prop="attrId" header-align="center" align="center" label="属性id"></el-table-column>
             <el-table-column prop="attrName" header-align="center" align="center" label="属性名"></el-table-column>
             <el-table-column prop="icon" header-align="center" align="center" label="属性图标"></el-table-column>
-            <el-table-column prop="valueSelect" header-align="center" align="center" label="可选值列表"></el-table-column>
+            <el-table-column prop="valueSelect" header-align="center" align="center" label="可选值列表"
+            ></el-table-column>
           </el-table>
           <el-pagination
             @size-change="sizeChangeHandle"
@@ -46,7 +47,8 @@
             type="danger"
             @click="batchDeleteRelation"
             :disabled="dataListSelections.length <= 0"
-          >批量删除</el-button>
+          >批量删除
+          </el-button>
           <!--  -->
           <el-table
             :data="relationAttrs"
@@ -55,18 +57,18 @@
             border
           >
             <el-table-column type="selection" header-align="center" align="center" width="50"></el-table-column>
-            <el-table-column prop="attrId" label="#"></el-table-column>
+            <el-table-column prop="attrId" label="ID"></el-table-column>
             <el-table-column prop="attrName" label="属性名"></el-table-column>
             <el-table-column prop="valueSelect" label="可选值">
               <template slot-scope="scope">
                 <el-tooltip placement="top">
                   <div slot="content">
                     <span v-for="(i,index) in scope.row.valueSelect.split(';')" :key="index">
-                      {{i}}
-                      <br />
+                      {{ i }}
+                      <br/>
                     </span>
                   </div>
-                  <el-tag>{{scope.row.valueSelect.split(";")[0]+" ..."}}</el-tag>
+                  <el-tag>{{ scope.row.valueSelect.split(';')[0] + ' ...' }}</el-tag>
                 </el-tooltip>
               </template>
             </el-table-column>
@@ -83,8 +85,6 @@
 </template>
 
 <script>
-//这里可以导入其他文件（比如：组件，工具js，第三方插件js，json文件，图片文件等等）
-//例如：import 《组件名称》 from '《组件路径》';
 
 export default {
   //import引入的组件需要注入到对象中才能使用
@@ -99,7 +99,7 @@ export default {
       relationAttrs: [],
       dataListSelections: [],
       dataForm: {
-        key: ""
+        key: ''
       },
       dataList: [],
       pageIndex: 1,
@@ -107,106 +107,109 @@ export default {
       totalPage: 0,
       dataListLoading: false,
       innerdataListSelections: []
-    };
+    }
   },
-  //计算属性 类似于data概念
-  computed: {},
-  //监控data中的数据变化
-  watch: {},
   //方法集合
   methods: {
     selectionChangeHandle(val) {
-      this.dataListSelections = val;
+      this.dataListSelections = val
     },
     innerSelectionChangeHandle(val) {
-      this.innerdataListSelections = val;
+      this.innerdataListSelections = val
     },
     addRelation() {
-      this.getDataList();
-      this.innerVisible = true;
+      this.getDataList()
+      this.innerVisible = true
     },
+    /**
+     * 批量移除关联
+     * @param val
+     */
     batchDeleteRelation(val) {
-      let postData = [];
+      let postData = []
       this.dataListSelections.forEach(item => {
-        postData.push({ attrId: item.attrId, attrGroupId: this.attrGroupId });
-      });
-      this.$http({
-        url: this.$http.adornUrl("/product/attrgroup/attr/relation/delete"),
-        method: "post",
-        data: this.$http.adornData(postData, false)
-      }).then(({ data }) => {
-        if (data.code === 0) {
-          this.$message({ type: "success", message: "删除成功" });
-          this.init(this.attrGroupId);
-        } else {
-          this.$message({ type: "error", message: data.msg });
+        postData.push({ attrId: item.attrId, attrGroupId: this.attrGroupId })
+      })
+      this.$API.attrGroup.reqRemoveAttrGroupRelation(postData).then(
+        Response => {
+          this.$message({ type: 'success', message: Response.msg })
+          this.init(this.attrGroupId)
         }
-      });
+      )
     },
-    //移除关联
+    /**
+     * 移除关联
+     * @param attrId
+     */
     relationRemove(attrId) {
-      let data = [];
-      data.push({ attrId, attrGroupId: this.attrGroupId });
-      this.$http({
-        url: this.$http.adornUrl("/product/attrgroup/attr/relation/delete"),
-        method: "post",
-        data: this.$http.adornData(data, false)
-      }).then(({ data }) => {
-        if (data.code == 0) {
-          this.$message({ type: "success", message: "删除成功" });
-          this.init(this.attrGroupId);
-        } else {
-          this.$message({ type: "error", message: data.msg });
+      let data = []
+      data.push({ attrId, attrGroupId: this.attrGroupId })
+      this.$API.attrGroup.reqRemoveAttrGroupRelation(data).then(
+        Response => {
+          this.$message({ type: 'success', message: Response.msg })
+          this.init(this.attrGroupId)
         }
-      });
+      )
     },
     submitAddRealtion() {
-      this.innerVisible = false;
+      this.innerVisible = false
       //准备数据
-      console.log("准备新增的数据", this.innerdataListSelections);
+      console.log('准备新增的数据', this.innerdataListSelections)
       if (this.innerdataListSelections.length > 0) {
-        let postData = [];
+        let postData = []
         this.innerdataListSelections.forEach(item => {
-          postData.push({ attrId: item.attrId, attrGroupId: this.attrGroupId });
-        });
+          postData.push({ attrId: item.attrId, attrGroupId: this.attrGroupId })
+        })
         this.$http({
-          url: this.$http.adornUrl("/product/attrgroup/attr/relation"),
-          method: "post",
+          url: this.$http.adornUrl('/product/attrgroup/attr/relation'),
+          method: 'post',
           data: this.$http.adornData(postData, false)
         }).then(({ data }) => {
-          if (data.code == 0) {
-            this.$message({ type: "success", message: "新增关联成功" });
+          if (data.code === 0) {
+            this.$message({ type: 'success', message: '新增关联成功' })
           }
-          this.$emit("refreshData");
-          this.init(this.attrGroupId);
-        });
+          this.$emit('refreshData')
+          this.init(this.attrGroupId)
+        })
       } else {
       }
     },
+    /**
+     * 查询属性分组关联的基本属性列表
+     * @param id
+     */
     init(id) {
-      this.attrGroupId = id || 0;
-      this.visible = true;
-      this.$http({
-        url: this.$http.adornUrl(
-          "/product/attrgroup/" + this.attrGroupId + "/attr/relation"
-        ),
-        method: "get",
-        params: this.$http.adornParams({})
-      }).then(({ data }) => {
-        this.relationAttrs = data.data;
-      });
+      this.attrGroupId = id || 0
+      this.visible = true
+      this.$API.attrGroup.reqGetAttrGroupRelation(this.attrGroupId).then(
+        Response => {
+          this.relationAttrs = Response.data
+        }
+      )
     },
-    dialogClose() {},
+    dialogClose() {
+    },
 
-    //========
     // 获取数据列表
     getDataList() {
-      this.dataListLoading = true;
-      this.$http({
+      this.dataListLoading = true
+      this.$API.attrGroup.reqGetNoAttrRelation(this.pageIndex, this.pageSize, this.dataForm.key, this.attrGroupId).then(
+        Response => {
+          if (Response.code === 200) {
+            this.dataList = Response.data.records
+            this.totalPage = Response.data.total
+          } else {
+            this.dataList = []
+            this.totalPage = 0
+          }
+          this.dataListLoading = false
+        }
+      )
+      /* this.$http({
         url: this.$http.adornUrl(
-          "/product/attrgroup/" + this.attrGroupId + "/noattr/relation"
+          '/product/attrgroup/' + this.attrGroupId + '/noattr/relation'
         ),
-        method: "get",
+        method: 'get',
         params: this.$http.adornParams({
           page: this.pageIndex,
           limit: this.pageSize,
@@ -214,26 +217,26 @@ export default {
         })
       }).then(({ data }) => {
         if (data && data.code === 0) {
-          this.dataList = data.page.list;
-          this.totalPage = data.page.totalCount;
+          this.dataList = data.page.list
+          this.totalPage = data.page.totalCount
         } else {
-          this.dataList = [];
-          this.totalPage = 0;
+          this.dataList = []
+          this.totalPage = 0
         }
-        this.dataListLoading = false;
-      });
+        this.dataListLoading = false
+      }) */
     },
     // 每页数
     sizeChangeHandle(val) {
-      this.pageSize = val;
-      this.pageIndex = 1;
-      this.getDataList();
+      this.pageSize = val
+      this.pageIndex = 1
+      this.getDataList()
     },
     // 当前页
     currentChangeHandle(val) {
-      this.pageIndex = val;
-      this.getDataList();
+      this.pageIndex = val
+      this.getDataList()
     }
   }
-};
+}
 </script>

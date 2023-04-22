@@ -173,8 +173,8 @@ export default {
     getDataList() {
       this.dataListLoading = true
       // '属性类型[0-销售属性，1-基本属性，2-既是销售属性又是基本属性]'
-      let type = this.attrtype === 0 ? 'sale' : 'base'
-      this.$API.attr.reqGetAttrList(this.pageIndex, this.pageSize, this.dataForm.key, type).then(
+      let attrType = this.attrtype === 0 ? 'sale' : 'base'
+      this.$API.attr.reqGetAttrList(this.catId,this.pageIndex, this.pageSize, this.dataForm.key, attrType).then(
         Response => {
           if (Response.code === 200) {
             this.dataList = Response.data.records
@@ -225,7 +225,19 @@ export default {
           type: 'warning'
         }
       ).then(() => {
-        this.$http({
+        this.$API.attr.reqRemoveAttr(ids).then(
+          Response=>{
+            this.$message({
+              message: Response.msg,
+              type: 'success',
+              duration: 1500,
+              onClose: () => {
+                this.getDataList()
+              }
+            })
+          }
+        )
+        /* this.$http({
           url: this.$http.adornUrl('/product/attr/delete'),
           method: 'post',
           data: this.$http.adornData(ids, false)
@@ -242,7 +254,7 @@ export default {
           } else {
             this.$message.error(data.msg)
           }
-        })
+        }) */
       })
     }
   }
