@@ -37,7 +37,7 @@
         </div>
         <div slot="footer" class="dialog-footer">
           <el-button @click="innerVisible = false">取 消</el-button>
-          <el-button type="primary" @click="submitAddRealtion">确认新增</el-button>
+          <el-button type="primary" @click="submitAddRelation">确认新增</el-button>
         </div>
       </el-dialog>
       <el-row>
@@ -151,7 +151,10 @@ export default {
         }
       )
     },
-    submitAddRealtion() {
+    /**
+     * 新增关联
+     */
+    submitAddRelation() {
       this.innerVisible = false
       //准备数据
       console.log('准备新增的数据', this.innerdataListSelections)
@@ -160,7 +163,14 @@ export default {
         this.innerdataListSelections.forEach(item => {
           postData.push({ attrId: item.attrId, attrGroupId: this.attrGroupId })
         })
-        this.$http({
+        this.$API.attrGroup.reqAddRelation(postData).then(
+          Response => {
+            this.$message({ type: 'success', message: Response.msg })
+            this.$emit('refreshData')
+            this.init(this.attrGroupId)
+          }
+        )
+        /* this.$http({
           url: this.$http.adornUrl('/product/attrgroup/attr/relation'),
           method: 'post',
           data: this.$http.adornData(postData, false)
@@ -172,6 +182,7 @@ export default {
           this.init(this.attrGroupId)
         })
       } else {
+      } */
       }
     },
     /**
@@ -205,26 +216,6 @@ export default {
           this.dataListLoading = false
         }
       )
-      /* this.$http({
-        url: this.$http.adornUrl(
-          '/product/attrgroup/' + this.attrGroupId + '/noattr/relation'
-        ),
-        method: 'get',
-        params: this.$http.adornParams({
-          page: this.pageIndex,
-          limit: this.pageSize,
-          key: this.dataForm.key
-        })
-      }).then(({ data }) => {
-        if (data && data.code === 0) {
-          this.dataList = data.page.list
-          this.totalPage = data.page.totalCount
-        } else {
-          this.dataList = []
-          this.totalPage = 0
-        }
-        this.dataListLoading = false
-      }) */
     },
     // 每页数
     sizeChangeHandle(val) {

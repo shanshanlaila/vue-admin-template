@@ -33,6 +33,7 @@ export const reqRemoveAttrGroupRelation = (data) => {
   return request.post(`/product/attrGroup/attr/relation/delete`, data)
 }
 
+// 获取没有被关联的属性
 export const reqGetNoAttrRelation = (page, limit, key, attrGroupId) => {
   return request.get(`/product/attrGroup/${attrGroupId}/noAttr/relation`, {
     params: {
@@ -41,4 +42,14 @@ export const reqGetNoAttrRelation = (page, limit, key, attrGroupId) => {
       key
     }
   })
+}
+
+// 新增关联
+export const reqAddRelation = (data) => {
+  return request.post(`/product/attrGroup/attr/relation`, data)
+}
+
+// 获取分类下所有分组和关联的属性
+export const reqGetAttrGroupWithAttr = (catId) => {
+  return request(`/product/attrGroup/${catId}/withAttr`, { method: 'get' })
 }

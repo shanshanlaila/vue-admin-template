@@ -172,13 +172,6 @@ export default {
           this.getCateRelation()
         }
       )
-      /* this.$http({
-        url: this.$http.adornUrl('/product/categorybrandrelation/delete'),
-        method: 'post',
-        data: this.$http.adornData([id], false)
-      }).then(({ data }) => {
-        this.getCateRelation()
-      }) */
     },
     /**
      * 关联分类

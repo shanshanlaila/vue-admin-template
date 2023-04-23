@@ -70,7 +70,7 @@ export default {
     }
   },
   components: {},
-  activated() {
+  mounted() {
     this.getDataList();
   },
   methods: {

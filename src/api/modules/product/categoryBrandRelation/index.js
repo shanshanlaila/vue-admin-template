@@ -19,3 +19,11 @@ export const reqAddCategoryBrandRelation = (brandId, catelogId) => request.post(
 })
 
 export const reqRemoveCategoryBrandRelation = (id) => request.delete(`product/categoryBrandRelation/remove/${id}`)
+
+export const reqGetBrands = (catId) => {
+  return request.get(`product/categoryBrandRelation/brands/list`, {
+    params: {
+      catId
+    }
+  })
+}

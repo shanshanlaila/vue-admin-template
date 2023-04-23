@@ -177,7 +177,7 @@ export default {
     }
   },
   created() {},
-  activated() {
+  mounted() {
     this.clearData();
     this.getQueryParams();
     if (this.spuId && this.catalogId) {

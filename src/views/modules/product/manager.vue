@@ -124,7 +124,7 @@ export default {
     };
   },
 
-  activated() {
+  mounted() {
     this.getDataList();
   },
   methods: {

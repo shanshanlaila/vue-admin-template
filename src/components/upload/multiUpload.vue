@@ -79,17 +79,15 @@ export default {
       return new Promise((resolve, reject) => {
         policy()
           .then(response => {
-            console.log("这是什么${filename}");
-            _self.dataObj.policy = response.data.policy;
-            _self.dataObj.signature = response.data.signature;
-            _self.dataObj.ossaccessKeyId = response.data.accessid;
-            _self.dataObj.key = response.data.dir + "/"+getUUID()+"_${filename}";
-            _self.dataObj.dir = response.data.dir;
-            _self.dataObj.host = response.data.host;
+            _self.dataObj.policy = response.policy
+            _self.dataObj.signature = response.signature
+            _self.dataObj.ossaccessKeyId = response.accessId
+            _self.dataObj.key = response.dir + getUUID() + '_${filename}'
+            _self.dataObj.dir = response.dir
+            _self.dataObj.host = response.host
             resolve(true);
           })
           .catch(err => {
-            console.log("出错了...",err)
             reject(false);
           });
       });
