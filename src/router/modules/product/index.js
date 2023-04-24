@@ -63,7 +63,7 @@ export default [
       {
         path: '/spuInfo',
         name: 'SpuInfo',
-        component: () => import('@/views/modules/product/spuinfo.vue'),
+        component: () => import('@/views/modules/product/manager.vue'),
         meta: { title: '商品管理', icon: 'el-icon-platform-eleme' }
       }
     ]

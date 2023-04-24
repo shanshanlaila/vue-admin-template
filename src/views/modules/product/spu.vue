@@ -49,8 +49,8 @@ export default {
       dataForm: {
         status: "",
         key: "",
-        brandId: 0,
-        catelogId: 0
+        brandId: '',
+        catelogId: ''
       },
       catPathSub: null,
       brandIdSub: null
@@ -59,6 +59,9 @@ export default {
   },
   //方法集合
   methods: {
+    /**
+     * 检索
+     */
     searchSpuInfo() {
       console.log("搜索条件", this.dataForm);
       this.PubSub.publish("dataForm",this.dataForm);

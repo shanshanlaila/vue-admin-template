@@ -9,7 +9,8 @@
           <brand-select style="width:160px"></brand-select>
         </el-form-item>
         <el-form-item label="价格">
-          <el-input-number style="width:160px" v-model="dataForm.price.min" :min="0"></el-input-number>-
+          <el-input-number style="width:160px" v-model="dataForm.price.min" :min="0"></el-input-number>
+          -
           <el-input-number style="width:160px" v-model="dataForm.price.max" :min="0"></el-input-number>
         </el-form-item>
         <el-form-item label="检索">
@@ -30,18 +31,18 @@
     >
       <el-table-column type="expand">
         <template slot-scope="scope">
-          商品标题：{{scope.row.skuTitle}}
-          <br />
-          商品副标题：{{scope.row.skuSubtitle}}
-          <br />
-          商品描述：{{scope.row.skuDesc}}
-          <br />
-          分类ID：{{scope.row.catalogId}}
-          <br />
-          SpuID：{{scope.row.spuId}}
-          <br />
-          品牌ID：{{scope.row.brandId}}
-          <br />
+          商品标题：{{ scope.row.skuTitle }}
+          <br/>
+          商品副标题：{{ scope.row.skuSubtitle }}
+          <br/>
+          商品描述：{{ scope.row.skuDesc }}
+          <br/>
+          分类ID：{{ scope.row.catalogId }}
+          <br/>
+          SpuID：{{ scope.row.spuId }}
+          <br/>
+          品牌ID：{{ scope.row.brandId }}
+          <br/>
         </template>
       </el-table-column>
       <el-table-column type="selection" header-align="center" align="center" width="50"></el-table-column>
@@ -49,7 +50,7 @@
       <el-table-column prop="skuName" header-align="center" align="center" label="名称"></el-table-column>
       <el-table-column prop="skuDefaultImg" header-align="center" align="center" label="默认图片">
         <template slot-scope="scope">
-          <img :src="scope.row.skuDefaultImg" style="width:80px;height:80px;" />
+          <img :src="scope.row.skuDefaultImg" style="width:80px;height:80px;"/>
         </template>
       </el-table-column>
       <el-table-column prop="price" header-align="center" align="center" label="价格"></el-table-column>
@@ -94,6 +95,8 @@
 
 import CategoryCascader from '@/views/common/category-cascader.vue'
 import BrandSelect from '@/views/common/brand-select.vue'
+import PubSub from 'pubsub-js'
+import { reqGetSkuList } from '@/api/modules/product/sku'
 
 export default {
   components: {
@@ -105,9 +108,9 @@ export default {
       catPathSub: null,
       brandIdSub: null,
       dataForm: {
-        key: "",
-        brandId: 0,
-        catelogId: 0,
+        key: '',
+        brandId: '',
+        catelogId: '',
         price: {
           min: 0,
           max: 0
@@ -121,33 +124,60 @@ export default {
       dataListSelections: [],
       addOrUpdateVisible: false,
       catelogPath: []
-    };
+    }
   },
 
   mounted() {
-    this.getDataList();
+    this.getDataList()
+    this.catPathSub = PubSub.subscribe('catPath', (msg, val) => {
+      this.dataForm.catelogId = val[val.length - 1]
+    })
+    this.brandIdSub = PubSub.subscribe('brandId', (msg, val) => {
+      this.dataForm.brandId = val
+    })
   },
   methods: {
     getSkuDetails(row, expand) {
       //sku详情查询
-      console.log("展开某行...", row, expand);
+      console.log('展开某行...', row, expand)
     },
     //处理更多指令
     handleCommand(row, command) {
-      console.log("~~~~~", row, command);
-      if ("stockSettings" === command) {
-        this.$router.push({ path: "/ware-sku", query: { skuId: row.skuId } });
+      console.log('~~~~~', row, command)
+      if ('stockSettings' === command) {
+        this.$router.push({ path: '/ware-sku', query: { skuId: row.skuId } })
       }
     },
     searchSkuInfo() {
-      this.getDataList();
+      this.getDataList()
     },
     // 获取数据列表
     getDataList() {
-      this.dataListLoading = true;
-      this.$http({
-        url: this.$http.adornUrl("/product/skuinfo/list"),
-        method: "get",
+      this.dataListLoading = true
+      let param = {
+        page: this.pageIndex,
+        limit: this.pageSize,
+        key: this.dataForm.key,
+        catelogId: this.dataForm.catelogId,
+        brandId: this.dataForm.brandId,
+        min: this.dataForm.price.min,
+        max: this.dataForm.price.max
+      }
+      this.$API.sku.reqGetSkuList(param).then(
+        Response => {
+          if (Response.code === 200) {
+            this.dataList = Response.data.records
+            this.totalPage = Response.data.total
+          } else {
+            this.dataList = []
+            this.totalPage = 0
+          }
+          this.dataListLoading = false
+        }
+      )
+      /* this.$http({
+        url: this.$http.adornUrl('/product/skuinfo/list'),
+        method: 'get',
         params: this.$http.adornParams({
           page: this.pageIndex,
           limit: this.pageSize,
@@ -159,42 +189,34 @@ export default {
         })
       }).then(({ data }) => {
         if (data && data.code === 0) {
-          this.dataList = data.page.list;
-          this.totalPage = data.page.totalCount;
+          this.dataList = data.page.list
+          this.totalPage = data.page.totalCount
         } else {
-          this.dataList = [];
-          this.totalPage = 0;
+          this.dataList = []
+          this.totalPage = 0
         }
-        this.dataListLoading = false;
-      });
+        this.dataListLoading = false
+      }) */
     },
     // 每页数
     sizeChangeHandle(val) {
-      this.pageSize = val;
-      this.pageIndex = 1;
-      this.getDataList();
+      this.pageSize = val
+      this.pageIndex = 1
+      this.getDataList()
     },
     // 当前页
     currentChangeHandle(val) {
-      this.pageIndex = val;
-      this.getDataList();
+      this.pageIndex = val
+      this.getDataList()
     },
     // 多选
     selectionChangeHandle(val) {
-      this.dataListSelections = val;
+      this.dataListSelections = val
     }
   },
-  mounted() {
-    this.catPathSub = PubSub.subscribe("catPath", (msg, val) => {
-      this.dataForm.catelogId = val[val.length - 1];
-    });
-    this.brandIdSub = PubSub.subscribe("brandId", (msg, val) => {
-      this.dataForm.brandId = val;
-    });
-  },
   beforeDestroy() {
-    PubSub.unsubscribe(this.catPathSub);
-    PubSub.unsubscribe(this.brandIdSub);
+    PubSub.unsubscribe(this.catPathSub)
+    PubSub.unsubscribe(this.brandIdSub)
   } //生命周期 销毁之前
-};
+}
 </script>

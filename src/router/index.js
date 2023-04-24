@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import product from '@/router/modules/product'
 import member from '@/router/modules/member'
+import ware from '@/router/modules/ware'
 
 Vue.use(Router)
 
@@ -19,7 +20,7 @@ export const constantRoutes = [
     component: Layout,
     redirect: '/category',
     meta: { title: '后台数据管理', icon: 'el-icon-s-tools' },
-    children: [...product,member]
+    children: [...product, member, ware]
 
   },
 

@@ -1,8 +1,7 @@
-import Layout from '@/layout/index.vue'
 import ThreeLayout from '@/layout/threeLayout.vue'
 
 /**
- * 商品路由
+ * 会员路由
  */
 export default {
   path: '/members',

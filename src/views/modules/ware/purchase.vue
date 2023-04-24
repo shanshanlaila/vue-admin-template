@@ -43,11 +43,11 @@
       <el-table-column prop="priority" header-align="center" align="center" label="优先级"></el-table-column>
       <el-table-column prop="status" header-align="center" align="center" label="状态">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.status == 0">新建</el-tag>
-          <el-tag type="info" v-if="scope.row.status == 1">已分配</el-tag>
-          <el-tag type="warning" v-if="scope.row.status == 2">已领取</el-tag>
-          <el-tag type="success" v-if="scope.row.status == 3">已完成</el-tag>
-          <el-tag type="danger" v-if="scope.row.status == 4">有异常</el-tag>
+          <el-tag v-if="scope.row.status === 0">新建</el-tag>
+          <el-tag type="info" v-if="scope.row.status === 1">已分配</el-tag>
+          <el-tag type="warning" v-if="scope.row.status === 2">已领取</el-tag>
+          <el-tag type="success" v-if="scope.row.status === 3">已完成</el-tag>
+          <el-tag type="danger" v-if="scope.row.status === 4">有异常</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="wareId" header-align="center" align="center" label="仓库id"></el-table-column>
@@ -59,7 +59,7 @@
           <el-button
             type="text"
             size="small"
-            v-if="scope.row.status==0||scope.row.status==1"
+            v-if="scope.row.status===0||scope.row.status===1"
             @click="opendrawer(scope.row)"
           >分配</el-button>
           <el-button type="text" size="small" @click="addOrUpdateHandle(scope.row.id)">修改</el-button>
@@ -97,6 +97,7 @@
 
 <script>
 import AddOrUpdate from "./purchase-add-or-update";
+import { isAuth } from '@/utils'
 export default {
   data() {
     return {
@@ -127,6 +128,7 @@ export default {
 
   },
   methods: {
+    isAuth,
     opendrawer(row){
       this.getUserList();
       this.currentRow = row;
