@@ -23,10 +23,16 @@ export default {
     },
     {
       path: '/purchases',
-      redirect: 'purchase',
+      redirect: '/purchaseitem',
       component: ThreeLayout,
       meta: { title: '采购单维护', icon: 'tree' },
       children: [
+        {
+          path: '/purchaseitem',
+          name: 'Purchaseitem',
+          component: () => import('@/views/modules/ware/purchaseitem.vue'),
+          meta: { title: '采购需求', icon: 'tree' }
+        },
         {
           path: '/purchase',
           name: 'Purchase',

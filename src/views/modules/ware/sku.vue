@@ -93,7 +93,7 @@ export default {
         page: 1,
         limit: 500
       }
-      this.$API.ware.reqGetWareSkuList(params).then(
+      this.$API.ware.reqGetWareInfoList(1,500,null).then(
         Response => {
           this.wareList = Response.data.records
         }
