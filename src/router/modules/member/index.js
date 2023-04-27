@@ -13,7 +13,7 @@ export default {
       path: '/level',
       name: 'Level',
       component: () => import('@/views/modules/member/level.vue'),
-      meta: { title: '会员等级', icon: 'tree' }
+      meta: { title: '会员等级', icon: 'el-icon-grape' }
     }
   ]
 

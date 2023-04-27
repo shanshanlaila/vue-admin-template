@@ -41,5 +41,8 @@ new Vue({
   el: '#app',
   router,
   store,
+  beforeCreate() {
+    Vue.prototype.$bus = this// 安装全局事件总线
+  },
   render: h => h(App)
 })

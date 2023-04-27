@@ -46,13 +46,19 @@
       :total="totalPage"
       layout="total, sizes, prev, pager, next, jumper"
     ></el-pagination>
+<!--    <el-dialog title="商品规格" :visible.sync="cateRelationDialogVisible">
+      <attrupdate :spuId="spuId" :catalogId="catalogId"></attrupdate>
+    </el-dialog>-->
   </div>
+
 </template>
 
 <script>
 import PubSub from 'pubsub-js'
+import Attrupdate from '@/views/modules/product/attrupdate.vue'
 
 export default {
+  components: { Attrupdate },
   data() {
     return {
       dataSub: null,
@@ -63,7 +69,10 @@ export default {
       totalPage: 0,
       dataListLoading: false,
       dataListSelections: [],
-      addOrUpdateVisible: false
+      addOrUpdateVisible: false,
+      cateRelationDialogVisible: false,
+      spuId: '',
+      catalogId: ''
     }
   },
   props: {
@@ -86,28 +95,31 @@ export default {
      * @param id
      */
     productUp(id) {
-      this.$http({
-        url: this.$http.adornUrl('/product/spuinfo/' + id + '/up'),
-        method: 'post'
-      }).then(({ data }) => {
-        if (data && data.code === 0) {
+      this.$API.spuInfo.reqSkuUp(id).then(
+        Response => {
           this.$message({
-            message: '操作成功',
+            message: Response.msg,
             type: 'success',
             duration: 1500,
             onClose: () => {
               this.getDataList()
             }
           })
-        } else {
-          this.$message.error(data.msg)
         }
-      })
+      )
     },
+    /**
+     * 点击规格按钮
+     * @param row
+     */
     attrUpdateShow(row) {
       console.log(row)
+      this.cateRelationDialogVisible = true
+      //this.spuId = row.id
+      //this.catalogId = row.catalogId
+      // 进行路由跳转
       this.$router.push({
-        path: '/product-attrupdate',
+        path: '/attrUpdate',
         query: { spuId: row.id, catalogId: row.catalogId }
       })
     },

@@ -12,6 +12,16 @@ export const reqGetAttrList = (catId, page, limit, key, attrType) => {
   })
 }
 
+// 根据spuId获取基础属性
+export const reqGetAttrValueBySpuId = (spuId) => {
+  return request.get(`product/attr/base/listforspu/${spuId}`)
+}
+
+// 根据spuId更新属性
+export const reqUpdateAttrBySkuId = (skuId, data) => {
+  return request.post(`product/attr/update/${skuId}`, data)
+}
+
 // 删除属性
 export const reqRemoveAttr = (ids) => request.post(`/product/attr/remove`, ids)
 

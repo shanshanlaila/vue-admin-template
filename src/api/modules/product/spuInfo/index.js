@@ -9,3 +9,7 @@ export const reqGetSpuList = (data) => {
     params: data
   })
 }
+
+export const reqSkuUp = (id) => {
+  return request.put(`product/spuInfo/${id}/up`)
+}
